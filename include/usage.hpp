@@ -61,6 +61,7 @@ class usage_t {
 
 		std::string cmd() const;
 		std::string title() const;
+		std::string version_info() const;
 		std::string help() const;
 		void validate() const;
 };

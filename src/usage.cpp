@@ -92,6 +92,39 @@ std::string usage_t::title() const {
 	return ss.str();
 }
 
+std::string usage_t::version_info() const {
+
+	std::stringstream ss;
+
+	if ( !this -> name.empty()) {
+
+		ss << this -> name;
+		if ( !this -> version.empty()) {
+
+			if ( this -> version.front() != '\n' )
+				ss << ' ';
+
+			if ( !this -> version_title.empty())
+				ss << this -> version_title << this -> version;
+			else ss << this -> version;
+
+		}
+
+	} else if ( !this -> version.empty()) {
+
+		std::string t = this -> version_title;
+		while ( !t.empty() && ( std::isspace(t.front()) || t.front() == '\n' || t.front() == '\r' ))
+			t.erase(0, 1);
+
+		if ( !t.empty())
+			ss << t << this -> version;
+		else ss << this -> version;
+	}
+
+	ss << line_feed(ss);
+	return ss.str();
+}
+
 usage_t::result_t usage_t::operator [](const std::string& name) const {
 
 	result_t res;
