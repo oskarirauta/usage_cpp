@@ -87,7 +87,6 @@ std::string usage_t::title() const {
 
 	if ( !this -> author.empty()) ss << line_feed(ss) << this -> author_title << this -> author;
 	if ( !this -> copyright.empty()) ss << line_feed(ss) << this -> copyright_title << this -> copyright;
-	ss << line_feed(ss);
 
 	return ss.str();
 }
@@ -121,7 +120,6 @@ std::string usage_t::version_info() const {
 		else ss << this -> version;
 	}
 
-	ss << line_feed(ss);
 	return ss.str();
 }
 
