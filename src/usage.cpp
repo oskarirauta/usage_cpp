@@ -222,7 +222,7 @@ std::string usage_t::help() const {
 			row += "-" + it -> second.key;
 			if ( !it -> second.word.empty())
 				row += ", ";
-		} else while ( row.size() < ks + 2 )
+		} else while ( row.size() < ks + 5 )
 			row += ' ';
 
 		if ( !it -> second.word.empty())

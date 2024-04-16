@@ -46,11 +46,11 @@ class usage_t {
 
 		args_t args;
 		std::string name;
-		std::string version_title = "\nVersion ";
+		std::string version_title = "\nversion ";
 		std::string version;
-		std::string author_title = "Author ";
+		std::string author_title = "author ";
 		std::string author;
-		std::string copyright_title = "Copyright ";
+		std::string copyright_title = "copyright ";
 		std::string copyright;
 		tsl::ordered_map<std::string, option_t> options;
 
