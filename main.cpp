@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.0.0",
+			.version = "1.3.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta",
 		},
