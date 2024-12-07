@@ -12,23 +12,28 @@ Such as this:
 ```
 
 if there is a option with `-s` as it's keyword and it requires a argument, it's argument will be -s.
-All other kind of validation, such as format of argument - is not handled by this library - but
-defining available options and querying them, is very simple and needs very little of coding.
+Some argument format validation also exists, available types are string, number, float, bool and hex.
+Arguments of options can be either not used, optional or required.
 
 Sample of usage definition:
 ```
         
 	usage_t usage = {
 		.args = { argc, argv },
-		.name = "usage_cpp",
-		.version = "1.0.0",
-		.author = "Oskari Rauta",
-		.copyright = "2024, Oskari Rauta",
+		.info = {
+			.name = "usage_cpp",
+			.version = "1.0.0",
+			.author = "Oskari Rauta",
+			.copyright = "2024, Oskari Rauta"
+		},
 		.options = {
-			{ "name", { .key = "n", .word = "name", .desc = "user's name", true, "name" }},
-			{ "age", { .key = "a", .word = "age", .desc = "user's age", true, "number" }},
+			{ "name", { .key = "n", .word = "name", .desc = "user's name", .flag = usage_t::REQUIRED, .name = "name" }},
+			{ "age", { .key = "a", .word = "age", .desc = "user's age", .flag = usage_t::REQUIRED, .name = "number", .type = usage_t::INT }},
+			{ "optional", { .key = "o", .word = "optional", .desc = "optional arg", .flag = usage_t::OPTIONAL, .name = "value" }},
+			{ "hex", { .key = "x", .word = "hex", .desc = "hex value", .flag = usage_t::REQUIRED, .name = "hex", .type = usage_t::HEX }},
 			{ "sudo", { .key = "s", .word = "sudo", .desc = "user can sudo" }},
-			{ "help", { .key = "h", .word = "help", .desc = "usage help" }}
+			{ "help", { .key = "h", .word = "help", .desc = "usage help" }},
+			{ "version", { .key = "v", .word = "version", .desc = "show version" }}
 		}
 	};
 ```
