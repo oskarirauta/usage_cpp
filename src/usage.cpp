@@ -203,6 +203,25 @@ std::string usage_t::help() const {
 	size_t ms = 0;
 	std::string s;
 
+	if ( !this -> info.usage_title.empty() || !this -> info.usage.empty()) {
+
+		if ( !this -> info.usage_title.empty())
+			s += this -> info.usage_title;
+
+		s += this -> args.cmd();
+
+		if ( !this -> info.usage.empty())
+			s += " " + this -> info.usage;
+
+		s += "\n";
+	}
+
+	if ( !this -> info.description.empty())
+		s += this -> info.description;
+
+	if ( !this -> info.options_title.empty())
+		s += this -> info.options_title;
+
 	// find size of shortest key
 	for ( auto it = this -> options.begin(); it != this -> options.end(); it++ ) {
 

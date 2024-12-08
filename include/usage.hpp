@@ -101,6 +101,10 @@ class usage_t {
 			std::string author;
 			std::string copyright_title = "copyright ";
 			std::string copyright;
+			std::string usage_title = "\nusage:\n   ";
+			std::string usage = "[options]";
+			std::string options_title = "\nOptions:";
+			std::string description;
 			std::string footer;
 		};
 

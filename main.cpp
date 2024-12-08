@@ -8,9 +8,10 @@ int main(int argc, char **argv) {
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.3.0",
+			.version = "1.4.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta",
+			.description = "\nExample program for demonstrating command-line parser\n"
 		},
 		.options = {
 			{ "name", { .key = "n", .word = "name", .desc = "user's name", .flag = usage_t::REQUIRED, .name = "name" }},
