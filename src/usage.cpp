@@ -242,7 +242,6 @@ std::string usage_t::help() const {
 		if ( !it -> second.key.empty()) i += 1 + it -> second.key.size();
 		if ( !it -> second.key.empty() && !it -> second.word.empty()) i += 2;
 		if ( !it -> second.word.empty()) i += 2 + it -> second.word.size();
-		//if ( it -> second.needs_arg ) i += 1 + 2 + ( it -> second.arg_name.empty() ? 3 : it -> second.arg_name.size());
 		if ( it -> second.flag != usage_t::arg_flag::NO ) i += 1 + 2 + ( it -> second.name.empty() ? 3 : it -> second.name.size());
 
 		if ( ms < i ) ms = i;
@@ -262,6 +261,10 @@ std::string usage_t::help() const {
 			row += "-" + it -> second.key;
 			if ( !it -> second.word.empty())
 				row += ", ";
+
+			while ( row.size() < ks + 5 )
+				row += " ";
+
 		} else while ( row.size() < ks + 5 )
 			row += ' ';
 

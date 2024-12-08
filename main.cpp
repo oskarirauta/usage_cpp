@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.4.0",
+			.version = "1.4.1",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta",
 			.description = "\nExample program for demonstrating command-line parser\n"
@@ -19,6 +19,9 @@ int main(int argc, char **argv) {
 			{ "optional", { .key = "o", .word = "optional", .desc = "optional arg", .flag = usage_t::OPTIONAL, .name = "value" }},
 			{ "hex", { .key = "x", .word = "hex", .desc = "hex value", .flag = usage_t::REQUIRED, .name = "hex", .type = usage_t::HEX }},
 			{ "sudo", { .key = "s", .word = "sudo", .desc = "user can sudo" }},
+			{ "long", { .word = "long", .desc = "no short opt for this option at all" }},
+			{ "option", { .key = "op", .word = "opt", .desc = "option with 2 character short opt" }},
+			{ "short", { .key = "b", .desc = "only short option is available" }},
 			{ "help", { .key = "h", .word = "help", .desc = "usage help" }},
 			{ "version", { .key = "v", .word = "version", .desc = "show version" }}
 		}
