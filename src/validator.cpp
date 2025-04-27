@@ -2,12 +2,75 @@
 #include <vector>
 #include <type_traits>
 #include <stdexcept>
-#include <algorithm>
+#include <utility>
 
-#include "common.hpp"
 #include "usage.hpp"
 
-tsl::ordered_map<std::string, std::string> usage_t::values() const {
+static const std::string whitespace = " \t\n\r\f\v";
+
+static std::string l_trim(const std::string& str) {
+
+	std::string _str(str);
+	_str.erase(_str.find_last_not_of(whitespace) + 1);
+	return _str;
+}
+
+static std::string trim(const std::string& str) {
+
+	std::string _str(l_trim(str));
+	_str.erase(0, _str.find_first_not_of(whitespace));
+	return _str;
+}
+
+static std::string to_lower(const std::string& str) {
+
+	std::string _str(str);
+
+	for ( auto& ch : _str )
+		if ( std::isupper(ch))
+			ch ^= 32;
+	return _str;
+}
+
+static bool has_prefix(const std::string& str, const std::string& prefix) {
+
+	#if __cplusplus >= 202002L
+		return str.starts_with(prefix);
+	#else
+		return str.size() >= prefix.size() && str.substr(0, prefix.size()).compare(prefix) == 0;
+	#endif
+}
+
+static bool is_number(const std::string& s) {
+
+	return !s.empty() && s.find_first_not_of("1234567890") == std::string::npos;
+}
+
+static bool is_float(const std::string& s) {
+
+	if ( s.empty() || s.find_first_not_of("1234567890.") != std::string::npos || s.find_first_of("1234567890") == std::string::npos )
+		return false;
+
+	if ( s.find_first_of('.') == std::string::npos )
+		return true;
+
+	return std::count_if(s.begin(), s.end(), [](std::string::value_type ch) { return ch == '.'; }) < 2;
+}
+
+static bool is_hex(const std::string& s) {
+
+	return ( has_prefix(s, "0x") && s.size() > 2 &&
+		s.find_first_not_of("01234567890abcdefABCDEF", 2) == std::string::npos ) ||
+		( !s.empty() && s.find_first_not_of("01234567890abcdefABCDEF") == std::string::npos );
+}
+
+template <typename K, typename V>
+static bool map_contains(const std::unordered_map<K, V>& _m, K val) {
+
+	return std::find_if(_m.begin(), _m.end(), [&val](const auto& p) { return p.first == val; }) != _m.end();
+}
+
+std::unordered_map<std::string, std::string> usage_t::values() const {
 	return std::as_const(this -> validated.values);
 }
 
@@ -28,7 +91,7 @@ usage_t::validator_t::operator bool() const {
 }
 
 bool usage_t::contains(const std::string& name) const {
-	return this -> validated.values.contains(name);
+	return map_contains(this -> validated.values, name);
 }
 
 usage_t::validator_t::validator_t(usage_t *u) {
@@ -55,15 +118,15 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 		if ( !waiting_arg && !optional_arg ) {
 
-			a = common::trim_ws(a);
+			a = trim(a);
 
-			while ( common::has_prefix(a, "--") && a != "--" )
+			while ( has_prefix(a, "--") && a != "--" )
 				a.erase(0, 1);
 
 			if ( a.empty())
 				continue;
 
-			if ( !common::has_prefix(a, "-") || a == "--" ) {
+			if ( !has_prefix(a, "-") || a == "--" ) {
 				parsing = false;
 				waiting_arg = false;
 				optional_arg = false;
@@ -75,7 +138,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 			}
 
 			a.erase(0,1);
-			a = common::ltrim_ws(a);
+			a = l_trim(a);
 
 			if ( a.empty())
 				continue;
@@ -120,7 +183,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 			if ( !alt ) {
 
-				if ( this -> values.contains(o))
+				if ( map_contains(this -> values, o))
 					this -> errors.push_back({ .name = o, .error = usage_t::error_type::DUPLICATE, .type = arg_type });
 
 				this -> values[o] = "";
@@ -131,24 +194,24 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 		if ( alt ) {
 
-			if ( this -> values.contains(alt_name))
+			if ( map_contains(this -> values, alt_name))
 				this -> errors.push_back({ .name = alt_name, .error = usage_t::error_type::DUPLICATE, .type = alt_type });
 
 			if ( alt_type != usage_t::arg_type::STRING )
-				alt_value = common::trim_ws(alt_value);
+				alt_value = trim(alt_value);
 
-			if ( alt_type == usage_t::arg_type::INT && !common::is_number(alt_value)) {
+			if ( alt_type == usage_t::arg_type::INT && !is_number(alt_value)) {
 				this -> errors.push_back({ .name = alt_name, .error = usage_t::error_type::ARG_VALIDATION, .type = alt_type, .value = alt_value });
-				if ( this -> values.contains(alt_name))
+				if ( map_contains(this -> values, alt_name))
 					this -> values.erase(alt_name);
 				waiting_arg = false;
 				optional_arg = false;
 				arg_type = usage_t::arg_type::STRING;
 				o = "";
 				continue;
-			} else if ( alt_type == usage_t::arg_type::FLOAT && !common::is_float(alt_value)) {
+			} else if ( alt_type == usage_t::arg_type::FLOAT && !is_float(alt_value)) {
 				this -> errors.push_back({ .name = alt_name, .error = usage_t::error_type::ARG_VALIDATION, .type = alt_type, .value = alt_value });
-				if ( this -> values.contains(alt_name))
+				if ( map_contains(this -> values, alt_name))
 					this -> values.erase(alt_name);
 				waiting_arg = false;
 				optional_arg = false;
@@ -164,12 +227,12 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
 					v = "x" + v;
-				else if ( !common::has_prefix(v, "0x"))
+				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
-				if ( !common::is_hex(v)) {
+				if ( !is_hex(v)) {
 					this -> errors.push_back({ .name = alt_name, .error = usage_t::error_type::ARG_VALIDATION, .type = alt_type, .value = alt_value });
-					if ( this -> values.contains(alt_name))
+					if ( map_contains(this -> values, alt_name))
 						this -> values.erase(alt_name);
 					waiting_arg = false;
 					optional_arg = false;
@@ -181,13 +244,13 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 			} else if ( alt_type == usage_t::arg_type::BOOL ) {
 
-				std::string v(common::to_lower(alt_value));
+				std::string v(to_lower(alt_value));
 				if ( v == "0" || v == "no" || v == "disabled" ) v = "false";
 				else if ( v == "1" || v == "yes" || v == "enabled" ) v = "true";
 
 				if ( v != "false" && v != "true" ) {
 					this -> errors.push_back({ .name = alt_name, .error = usage_t::error_type::ARG_VALIDATION, .type = alt_type, .value = alt_value });
-					if ( this -> values.contains(alt_name))
+					if ( map_contains(this -> values, alt_name))
 						this -> values.erase(alt_name);
 					waiting_arg = false;
 					optional_arg = false;
@@ -216,9 +279,9 @@ usage_t::validator_t::validator_t(usage_t *u) {
 		if ( waiting_arg ) {
 
 			if ( arg_type != usage_t::arg_type::STRING )
-				a = common::trim_ws(a);
+				a = trim(a);
 
-			if ( arg_type == usage_t::arg_type::INT && !common::is_number(a)) {
+			if ( arg_type == usage_t::arg_type::INT && !is_number(a)) {
 				this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 				this -> values.erase(o);
 				waiting_arg = false;
@@ -226,7 +289,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 				arg_type = usage_t::arg_type::STRING;
 				o = "";
 				continue;
-			} else if ( arg_type == usage_t::arg_type::FLOAT && !common::is_float(a)) {
+			} else if ( arg_type == usage_t::arg_type::FLOAT && !is_float(a)) {
 				this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 				this -> values.erase(o);
 				waiting_arg = false;
@@ -243,10 +306,10 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
 					v = "x" + v;
-				else if ( !common::has_prefix(v, "0x"))
+				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
-				if ( !common::is_hex(v)) {
+				if ( !is_hex(v)) {
 					this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 					this -> values.erase(o);
 					waiting_arg = false;
@@ -257,7 +320,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 				} else a = v;
 			} else if ( arg_type == usage_t::arg_type::BOOL ) {
 
-				std::string v(common::to_lower(a));
+				std::string v(to_lower(a));
 				if ( v == "0" || v == "no" || v == "disabled" ) v = "false";
 				else if ( v == "1" || v == "yes" || v == "enabled" ) v = "true";
 
@@ -276,15 +339,15 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 		} else if ( optional_arg ) {
 
-			std::string v(common::trim_ws(a));
+			std::string v(trim(a));
 
-			while ( common::has_prefix(v, "--") && v != "--" )
+			while ( has_prefix(v, "--") && v != "--" )
 				v.erase(0, 1);
 
-			if ( !v.empty() && common::has_prefix(v, "-")) {
+			if ( !v.empty() && has_prefix(v, "-")) {
 
 				v.erase(0,1);
-				v = common::ltrim_ws(v);
+				v = l_trim(v);
 
 				if ( !v.empty()) {
 
@@ -304,7 +367,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 
 					if ( valid && o != _o ) {
 
-						if ( this -> values.contains(o))
+						if ( map_contains(this -> values, o))
 							this -> errors.push_back({ .name = o, .error = usage_t::error_type::DUPLICATE, .type = arg_type });
 
 						this -> values[o] = "";
@@ -314,9 +377,9 @@ usage_t::validator_t::validator_t(usage_t *u) {
 			}
 
 			if ( arg_type != usage_t::arg_type::STRING )
-				a = common::trim_ws(a);
+				a = trim(a);
 
-			if ( arg_type == usage_t::arg_type::INT && !common::is_number(a)) {
+			if ( arg_type == usage_t::arg_type::INT && !is_number(a)) {
 				this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 				this -> values.erase(o);
 				waiting_arg = false;
@@ -324,7 +387,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 				arg_type = usage_t::arg_type::STRING;
 				o = "";
 				continue;
-			} else if ( arg_type == usage_t::arg_type::FLOAT && !common::is_float(a)) {
+			} else if ( arg_type == usage_t::arg_type::FLOAT && !is_float(a)) {
 				this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 				this -> values.erase(o);
 				waiting_arg = false;
@@ -341,10 +404,10 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
 					v = "x" + v;
-				else if ( !common::has_prefix(v, "0x"))
+				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
-				if ( !common::is_hex(v)) {
+				if ( !is_hex(v)) {
 					this -> errors.push_back({ .name = o, .error = usage_t::error_type::ARG_VALIDATION, .type = arg_type, .value = a });
 					this -> values.erase(o);
 					waiting_arg = false;
@@ -355,7 +418,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 				} else a = v;
 			} else if ( arg_type == usage_t::arg_type::BOOL ) {
 
-				std::string v(common::to_lower(a));
+				std::string v(to_lower(a));
 				if ( v == "0" || v == "no" || v == "disabled" ) v = "false";
 				else if ( v == "1" || v == "yes" || v == "enabled" ) v = "true";
 

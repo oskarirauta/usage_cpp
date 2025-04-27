@@ -2,7 +2,8 @@
 #include <string>
 #include <ostream>
 #include <vector>
-#include "tsl/ordered_map.h"
+#include <algorithm>
+#include <unordered_map>
 
 class usage_t {
 
@@ -18,7 +19,7 @@ class usage_t {
 			private:
 				validator_t(usage_t *u);
 
-				tsl::ordered_map<std::string, std::string> values;
+				std::unordered_map<std::string, std::string> values;
 				std::vector<usage_t::error_t> errors;
 				std::vector<std::string> remainder;
 				size_t size() const;
@@ -111,7 +112,7 @@ class usage_t {
 		args_t args;
 		info_t info;
 
-		tsl::ordered_map<std::string, option_t> options;
+		std::unordered_map<std::string, option_t> options;
 
 		validator_t validated = validator_t(this);
 
@@ -126,7 +127,7 @@ class usage_t {
 		std::string version() const;
 		std::string help() const;
 
-		tsl::ordered_map<std::string, std::string> values() const;
+		std::unordered_map<std::string, std::string> values() const;
 		std::vector<usage_t::error_t> errors() const;
 		std::vector<std::string> remainder() const;
 

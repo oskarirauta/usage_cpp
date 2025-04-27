@@ -22,7 +22,7 @@ Sample of usage definition:
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.0.0",
+			.version = "1.5.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta"
 		},
@@ -41,12 +41,7 @@ Sample of usage definition:
 To make usage_cpp work, it requires only .args and .options - and .name, .version, .author and .copyright
 are optional, you can even use them partially and they are ignored if left empty.
 
-options is a [ordered_map](https://github.com/Tessil/ordered-map) by [Tessil](https://github.com/Tessil) which
-I have merged to my [common_cpp](https://github.com/oskarirauta/common_cpp) library.
-
-`tsl::ordered_map<std::string, { .key = string, .word = string, .desc = string, .needs_arg = bool, .arg_desc = string }>`
-
-For full usage test, check provided example.
+options is std::unordered_map which is reverse iterated when composing usage/help.
 
 ### <sub>Note</sub>
 usage_cpp replaces my previous library [cmdparser_cpp](https://github.com/oskarirauta/cmdparser_cpp) that has some similar
@@ -55,14 +50,13 @@ functionality. That repository is no longer updated and is now archived.
 
 ## <sub>Depends</sub>
 
- - [common_cpp](https://github.com/oskarirauta/common_cpp)
+usage_cpp does not have depencies
 
 ## <sub>Importing</sub>
 
- - clone common_cpp as a submodule to common
  - clone usage_cpp as a submodule to usage
- - include common_cpp's and usage_cpp's Makefile.incs in your Makefile
- - link with COMMON_OBJS and USAGE_OBJS
+ - include usage_cpp's Makefile.incs in your Makefile
+ - link with USAGE_OBJS
 
 ## <sub>Example</sub>
 

@@ -2,16 +2,40 @@
 #include <vector>
 #include <type_traits>
 #include <stdexcept>
-#include <algorithm>
-#include "common.hpp"
 
 #include "usage.hpp"
+
+static const std::string whitespace = " \t\n\r\f\v";
 
 static std::string line_feed(const std::stringstream& ss) {
 
 	if ( ss.str().empty())
 		return "";
 	return "\n";
+}
+
+static std::string to_lower(const std::string& str) {
+
+        std::string _str(str);
+
+        for ( auto& ch : _str )
+                if ( std::isupper(ch))
+                        ch ^= 32;
+        return _str;
+}
+
+static std::string trim(const std::string& str) {
+
+	std::string _str(str);
+	_str.erase(_str.find_last_not_of(whitespace) + 1);
+	_str.erase(0, _str.find_first_not_of(whitespace));
+	return _str;
+}
+
+template <typename K, typename V>
+static bool map_contains(const std::unordered_map<K, V>& _m, K val) {
+
+	return std::find_if(_m.begin(), _m.end(), [&val](const auto& p) { return p.first == val; }) != _m.end();
 }
 
 usage_t::args_t::args_t(const int argc, char **argv) {
@@ -53,7 +77,7 @@ usage_t::result_t::operator std::string() const {
 }
 
 bool usage_t::result_t::boolValue() const {
-	return common::to_lower(common::trim_ws(this -> value)) == "true" ? true : false;
+	return to_lower(trim(this -> value)) == "true" ? true : false;
 }
 
 std::string usage_t::result_t::stringValue() const {
@@ -180,7 +204,7 @@ std::string usage_t::version() const {
 usage_t::result_t usage_t::operator [](const std::string& name) const {
 
 	auto values = this -> values();
-	if ( values.contains(name))
+	if ( map_contains(values, name))
 		return { .enabled = true, .value = values[name] };
 	else return { .enabled = false };
 }
@@ -191,7 +215,7 @@ usage_t::result_t usage_t::operator [](const char* name) const {
 
 std::string usage_t::value(const std::string& name) const {
 	auto values = this -> values();
-	return values.contains(name) ? values[name] : "";
+	return map_contains(values, name) ? values[name] : "";
 }
 
 std::string usage_t::help() const {
@@ -249,9 +273,13 @@ std::string usage_t::help() const {
 
 	ms += 7; // prefix(3) + "tab"(4);
 
-	for ( auto it = this -> options.begin(); it != this -> options.end(); it++ ) {
+	std::vector<std::string> keys;
+	std::transform(this -> options.begin(), this -> options.end(), std::back_inserter(keys), [](const auto& p) { return p.first; });
 
-		if ( it -> first.empty() || ( it -> second.key.empty() && it -> second.word.empty()))
+	for ( auto key = keys.rbegin(); key != keys.rend(); key++ ) {
+
+		auto it = this -> options.find(*key);
+		if ( it == this -> options.end() || it -> first.empty() || ( it -> second.key.empty() && it -> second.word.empty()))
 			continue;
 
 		std::string row = "   ";
