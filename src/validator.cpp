@@ -226,7 +226,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v.erase(0, 1);
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
-					v = "x" + v;
+					v = "0" + v;
 				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
@@ -305,7 +305,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v.erase(0, 1);
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
-					v = "x" + v;
+					v = "0" + v;
 				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
@@ -403,7 +403,7 @@ usage_t::validator_t::validator_t(usage_t *u) {
 					v.erase(0, 1);
 					v = "0x" + v;
 				} else if ( v.size() > 1 && v.front() == 'x' )
-					v = "x" + v;
+					v = "0" + v;
 				else if ( !has_prefix(v, "0x"))
 					v = "0x" + v;
 
