@@ -126,14 +126,20 @@ usage_t::validator_t::validator_t(usage_t *u) {
 			if ( a.empty())
 				continue;
 
-			if ( !has_prefix(a, "-") || a == "--" ) {
+			if ( a == "--" ) {
+				// explicit end-of-options marker: everything after is positional
 				parsing = false;
 				waiting_arg = false;
 				optional_arg = false;
 				arg_type = usage_t::arg_type::STRING;
 				o = "";
-				if ( a != "--" )
-					this -> remainder.push_back(a);
+				continue;
+			}
+
+			if ( !has_prefix(a, "-")) {
+				// a positional argument; collect it but keep parsing options that
+				// follow, so `cmd <positional> --option` works (e.g. subcommands)
+				this -> remainder.push_back(a);
 				continue;
 			}
 
