@@ -143,7 +143,10 @@ std::string usage_t::title() const {
 		ss << this -> info.name;
 		if ( !this -> info.version.empty()) {
 
-			if ( this -> info.version.front() != '\n' )
+			// space the name from what follows, unless that already starts on a
+			// new line (version_title is what immediately follows the name)
+			if ( ( this -> info.version_title.empty() ? this -> info.version.front()
+			                                          : this -> info.version_title.front()) != '\n' )
 				ss << ' ';
 
 			if ( !this -> info.version_title.empty())
@@ -178,7 +181,10 @@ std::string usage_t::version() const {
 		ss << this -> info.name;
 		if ( !this -> info.version.empty()) {
 
-			if ( this -> info.version.front() != '\n' )
+			// space the name from what follows, unless that already starts on a
+			// new line (version_title is what immediately follows the name)
+			if ( ( this -> info.version_title.empty() ? this -> info.version.front()
+			                                          : this -> info.version_title.front()) != '\n' )
 				ss << ' ';
 
 			if ( !this -> info.version_title.empty())
@@ -224,7 +230,6 @@ std::string usage_t::help() const {
 		return "No options available for this program";
 
 	size_t ks = 0;
-	size_t ms = 0;
 	std::string s;
 
 	if ( !this -> info.usage_title.empty() || !this -> info.usage.empty()) {
@@ -256,30 +261,16 @@ std::string usage_t::help() const {
 			ks = it -> second.key.size() + 1;
 	}
 
-	// find longest key + word
+	// Build each option's left part (everything up to the description), measure
+	// the widest, then align every description to a common column. (Computing a
+	// width up front mis-counted the key-column padding, so long options ran into
+	// their descriptions.)
+	std::vector<std::pair<std::string, std::string>> rows;   // { left part, description }
+	size_t widest = 0;
+
 	for ( auto it = this -> options.begin(); it != this -> options.end(); it++ ) {
 
 		if ( it -> first.empty() || ( it -> second.key.empty() && it -> second.word.empty()))
-			continue;
-
-		size_t i = 0;
-		if ( !it -> second.key.empty()) i += 1 + it -> second.key.size();
-		if ( !it -> second.key.empty() && !it -> second.word.empty()) i += 2;
-		if ( !it -> second.word.empty()) i += 2 + it -> second.word.size();
-		if ( it -> second.flag != usage_t::arg_flag::NO ) i += 1 + 2 + ( it -> second.name.empty() ? 3 : it -> second.name.size());
-
-		if ( ms < i ) ms = i;
-	}
-
-	ms += 7; // prefix(3) + "tab"(4);
-
-	std::vector<std::string> keys;
-	std::transform(this -> options.begin(), this -> options.end(), std::back_inserter(keys), [](const auto& p) { return p.first; });
-
-	for ( auto key = keys.rbegin(); key != keys.rend(); key++ ) {
-
-		auto it = this -> options.find(*key);
-		if ( it == this -> options.end() || it -> first.empty() || ( it -> second.key.empty() && it -> second.word.empty()))
 			continue;
 
 		std::string row = "   ";
@@ -304,11 +295,21 @@ std::string usage_t::help() const {
 		else if ( it -> second.flag == usage_t::arg_flag::OPTIONAL )
 			row += " [" + ( it -> second.name.empty() ? "arg" : it -> second.name ) + "]";
 
-		while ( row.size() < ms )
-			row += ' ';
+		if ( row.size() > widest )
+			widest = row.size();
 
-		if ( !it -> second.desc.empty())
-			row += it -> second.desc;
+		rows.push_back({ row, it -> second.desc });
+	}
+
+	for ( const auto& r : rows ) {
+
+		std::string row = r.first;
+
+		if ( !r.second.empty()) {
+			while ( row.size() < widest )
+				row += ' ';
+			row += "   " + r.second;   // gap between the option column and its description
+		}
 
 		if ( !s.empty())
 			s += '\n';

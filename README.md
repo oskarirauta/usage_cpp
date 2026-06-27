@@ -22,7 +22,7 @@ Sample of usage definition:
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.6.0",
+			.version = "1.6.1",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta"
 		},
@@ -41,7 +41,8 @@ Sample of usage definition:
 To make usage_cpp work, it requires only .args and .options - and .name, .version, .author and .copyright
 are optional, you can even use them partially and they are ignored if left empty.
 
-options is std::unordered_map which is reverse iterated when composing usage/help.
+options is an ordered list (`std::vector<std::pair<std::string, option_t>>`):
+options are shown in usage/help in the exact order they were declared.
 
 ### <sub>Positional arguments</sub>
 

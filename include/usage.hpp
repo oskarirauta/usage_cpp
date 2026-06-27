@@ -2,6 +2,7 @@
 #include <string>
 #include <ostream>
 #include <vector>
+#include <utility>
 #include <algorithm>
 #include <unordered_map>
 
@@ -112,7 +113,8 @@ class usage_t {
 		args_t args;
 		info_t info;
 
-		std::unordered_map<std::string, option_t> options;
+		// ordered: options are listed in usage/help in their declared order
+		std::vector<std::pair<std::string, option_t>> options;
 
 		validator_t validated = validator_t(this);
 
