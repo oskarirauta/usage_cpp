@@ -22,7 +22,7 @@ Sample of usage definition:
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.5.0",
+			.version = "1.6.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta"
 		},
@@ -42,6 +42,25 @@ To make usage_cpp work, it requires only .args and .options - and .name, .versio
 are optional, you can even use them partially and they are ignored if left empty.
 
 options is std::unordered_map which is reverse iterated when composing usage/help.
+
+### <sub>Positional arguments</sub>
+
+Arguments that are not options are collected, in order, into `usage.remainder()`.
+Option parsing continues across positionals, so options may appear before, after
+or in between positional arguments. This makes subcommand-style command lines
+work naturally:
+
+```
+prog <command> <name> --option value
+```
+
+`<command>` and `<name>` end up in `remainder()`, while `--option` is parsed as
+usual. To stop option parsing explicitly (so the rest is treated as positional
+even if it looks like an option), use the `--` end-of-options marker:
+
+```
+prog --name value -- --not-an-option
+```
 
 ### <sub>Note</sub>
 usage_cpp replaces my previous library [cmdparser_cpp](https://github.com/oskarirauta/cmdparser_cpp) that has some similar
