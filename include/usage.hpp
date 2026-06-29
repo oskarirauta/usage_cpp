@@ -2,6 +2,7 @@
 #include <string>
 #include <ostream>
 #include <vector>
+#include <memory>
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
@@ -23,6 +24,14 @@ class usage_t {
 				std::unordered_map<std::string, std::string> values;
 				std::vector<usage_t::error_t> errors;
 				std::vector<std::string> remainder;
+
+				// subcommands: the matched command (if any), its own usage_t
+				// (raw - owned by usage_t::commands), and the raw arguments
+				// that followed it (always captured, even for a raw command)
+				std::string command;
+				usage_t* sub = nullptr;
+				std::vector<std::string> tail;
+
 				size_t size() const;
 
 			public:
@@ -64,6 +73,7 @@ class usage_t {
 				std::string cmd() const;
 				std::string operator [](size_t index) const;
 
+				args_t() = default;                       // empty - for subcommand usage_t's (filled on dispatch)
 				args_t(const int argc, char **argv);
 		};
 
@@ -116,6 +126,13 @@ class usage_t {
 		// ordered: options are listed in usage/help in their declared order
 		std::vector<std::pair<std::string, option_t>> options;
 
+		// optional subcommands, declared order. The first positional argument
+		// matching a name hands the rest of the command line to that command's
+		// own usage_t (its options/args). A null entry is a raw passthrough -
+		// the command is recognised but its arguments are left unparsed (see
+		// tail()). Empty -> no subcommand handling (the classic behaviour).
+		std::vector<std::pair<std::string, std::shared_ptr<usage_t>>> commands;
+
 		validator_t validated = validator_t(this);
 
 		result_t operator [](const std::string& name) const;
@@ -132,6 +149,11 @@ class usage_t {
 		std::unordered_map<std::string, std::string> values() const;
 		std::vector<usage_t::error_t> errors() const;
 		std::vector<std::string> remainder() const;
+
+		// subcommands (see the `commands` member)
+		std::string subcommand() const;             // matched command name ("" if none)
+		usage_t* sub() const;                        // its usage_t (nullptr if raw / none)
+		std::vector<std::string> tail() const;       // raw arguments after the command
 
 		bool contains(const std::string& name) const;
 		std::string value(const std::string& name) const;

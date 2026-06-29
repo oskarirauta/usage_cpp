@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.6.1",
+			.version = "1.7.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta",
 			.description = "\nExample program for demonstrating command-line parser\n"
@@ -24,8 +24,43 @@ int main(int argc, char **argv) {
 			{ "short", { .key = "b", .desc = "only short option is available" }},
 			{ "help", { .key = "h", .word = "help", .desc = "usage help" }},
 			{ "version", { .key = "v", .word = "version", .desc = "show version" }}
+		},
+		// subcommands: each gets its OWN usage_t (own options); a null entry is
+		// a raw passthrough whose arguments are left unparsed (see tail()).
+		.commands = {
+			{ "greet", std::make_shared<usage_t>(usage_t{
+				.info = { .description = "\n   greet <-n name> [-l]   greet a user\n" },
+				.options = {
+					{ "name", { .key = "n", .word = "name", .desc = "who to greet", .flag = usage_t::REQUIRED, .name = "name" }},
+					{ "loud", { .key = "l", .word = "loud", .desc = "shout the greeting" }}
+				}
+			}) },
+			{ "raw", nullptr }
 		}
 	};
+
+	// --- subcommands: dispatched before the classic option demo below -------
+	if ( usage.subcommand() == "greet" ) {
+
+		usage_t& g = *usage.sub();   // greet's own parsed usage_t
+
+		if ( !g.validated ) {
+			std::cout << "greet: command-line errors:\n" << g.errors() << std::endl;
+			return 1;
+		}
+
+		std::string who = g["name"] ? (std::string)g["name"] : "world";
+		std::cout << ( g["loud"] ? "HELLO, " : "Hello, " ) << who << ( g["loud"] ? "!" : "." ) << std::endl;
+		return 0;
+
+	} else if ( usage.subcommand() == "raw" ) {
+
+		std::cout << "raw passthrough received:";
+		for ( const auto& s : usage.tail())
+			std::cout << " " << s;
+		std::cout << std::endl;
+		return 0;
+	}
 
 	if ( usage["help"] ) {
 

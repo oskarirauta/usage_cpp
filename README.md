@@ -22,7 +22,7 @@ Sample of usage definition:
 		.args = { argc, argv },
 		.info = {
 			.name = "usage_cpp",
-			.version = "1.6.1",
+			.version = "1.7.0",
 			.author = "Oskari Rauta",
 			.copyright = "2024, Oskari Rauta"
 		},
@@ -62,6 +62,50 @@ even if it looks like an option), use the `--` end-of-options marker:
 ```
 prog --name value -- --not-an-option
 ```
+
+### <sub>Subcommands</sub>
+
+A `usage_t` may declare subcommands, each with its OWN `usage_t` - its own
+options and, recursively, its own subcommands:
+
+```
+std::vector<std::pair<std::string, std::shared_ptr<usage_t>>> commands;
+```
+
+When the first positional argument matches a command name, the rest of the
+command line is handed to that command's `usage_t` and parsed against ITS options
+- exactly like running a separate program with `argv + 1`. Global options that
+appear before the command are still parsed against the parent. A `nullptr` entry
+is a **raw passthrough**: the command is recognised but its arguments are left
+unparsed - useful when they are foreign flags (e.g. wrapping `docker run`).
+
+```
+usage_t prog = {
+    .args = { argc, argv },
+    .options = { /* global flags: -h, -v ... */ },
+    .commands = {
+        { "greet", std::make_shared<usage_t>(usage_t{
+            .options = {{ "name", { .key = "n", .word = "name", .flag = usage_t::REQUIRED, .name = "name" }}}
+        }) },
+        { "raw", nullptr }    // raw passthrough -> prog.tail()
+    }
+};
+
+if ( prog.subcommand() == "greet" )
+    std::cout << "hello " << (std::string)(*prog.sub())["name"] << "\n";
+else if ( prog.subcommand() == "raw" )
+    for ( const auto& a : prog.tail()) std::cout << a << "\n";
+```
+
+Accessors:
+ - `subcommand()` - the matched command name (`""` if none)
+ - `sub()` - the command's `usage_t*` (`nullptr` for a raw or unmatched command)
+ - `tail()` - the raw arguments that followed the command
+
+Using `shared_ptr` keeps `usage_t` an aggregate (so `.args = { ... }` designated
+initialisation still works) while still owning the subcommands: they are released
+automatically with the parent, no destructor needed. Leaving `commands` empty
+keeps the classic single-level behaviour unchanged.
 
 ### <sub>Note</sub>
 usage_cpp replaces my previous library [cmdparser_cpp](https://github.com/oskarirauta/cmdparser_cpp) that has some similar

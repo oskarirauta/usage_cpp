@@ -82,6 +82,18 @@ std::vector<std::string> usage_t::remainder() const {
 	return std::as_const(this -> validated.remainder);
 }
 
+std::string usage_t::subcommand() const {
+	return std::as_const(this -> validated.command);
+}
+
+usage_t* usage_t::sub() const {
+	return this -> validated.sub;
+}
+
+std::vector<std::string> usage_t::tail() const {
+	return std::as_const(this -> validated.tail);
+}
+
 size_t usage_t::validator_t::size() const {
 	return this -> values.size();
 }
@@ -102,7 +114,9 @@ usage_t::validator_t::validator_t(usage_t *u) {
 	usage_t::arg_type arg_type = usage_t::arg_type::STRING;
 	std::string o;
 
-	for ( const auto& s : u -> args._vec ) {
+	for ( std::vector<std::string>::size_type _i = 0; _i < u -> args._vec.size(); _i++ ) {
+
+		const std::string& s = u -> args._vec[_i];
 
 		if ( !parsing ) {
 			this -> remainder.push_back(s);
@@ -137,6 +151,35 @@ usage_t::validator_t::validator_t(usage_t *u) {
 			}
 
 			if ( !has_prefix(a, "-")) {
+
+				// subcommand dispatch: if this positional names a declared
+				// command, hand the rest of the argument vector to that
+				// command's own usage_t (a null entry leaves them unparsed -
+				// see tail()) and stop; the command owns what follows.
+				if ( !u -> commands.empty()) {
+
+					bool is_command = false;
+					std::shared_ptr<usage_t> target;
+
+					for ( const auto& c : u -> commands )
+						if ( a == c.first ) { is_command = true; target = c.second; break; }
+
+					if ( is_command ) {
+
+						this -> command = a;
+						this -> tail.assign(u -> args._vec.begin() + _i + 1, u -> args._vec.end());
+
+						if ( target ) {
+							target -> args._cmd = a;
+							target -> args._vec = this -> tail;
+							target -> validated = usage_t::validator_t(target.get());
+							this -> sub = target.get();
+						}
+
+						break;
+					}
+				}
+
 				// a positional argument; collect it but keep parsing options that
 				// follow, so `cmd <positional> --option` works (e.g. subcommands)
 				this -> remainder.push_back(a);
